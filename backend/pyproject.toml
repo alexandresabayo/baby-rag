@@ -3,6 +3,13 @@ name = "baby-rag-backend"
 version = "0.1.0"
 description = "Provider-agnostic RAG backend (FastAPI + SQLite + ChromaDB)"
 requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app", "app.api", "app.db", "app.services"]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -27,6 +34,9 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.setuptools.package-data]
+app = ["db/schema.sql"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

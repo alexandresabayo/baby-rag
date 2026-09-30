@@ -9,3 +9,4 @@ data/
 corpus/*.txt
 !corpus/sample-*.txt
 *.zip
+*.egg-info/
