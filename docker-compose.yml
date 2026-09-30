@@ -1,0 +1,54 @@
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma-data:/chroma/chroma
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      CHROMA_MODE: http
+      CHROMA_HOST: chroma
+      CHROMA_PORT: "8000"
+      DATABASE_PATH: /data/babyrag.db
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.mistral.ai/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-mistral-small-latest}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-https://api.mistral.ai/v1}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-mistral-embed}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-1024}
+      FAKE_PROVIDERS: ${FAKE_PROVIDERS:-0}
+      CORPUS_DIR: /corpus
+    volumes:
+      - backend-data:/data
+      - ./corpus:/corpus:ro
+    depends_on:
+      chroma:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  chroma-data:
+  backend-data:

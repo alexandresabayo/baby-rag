@@ -1,0 +1,6 @@
+{"question": "Who invented the first practical bicycle and when?", "expected_path": "sample-bicycles.txt"}
+{"question": "What was the pneumatic tyre and who invented it?", "expected_path": "sample-bicycles.txt"}
+{"question": "How tall was the Lighthouse of Alexandria?", "expected_path": "sample-essay.txt"}
+{"question": "Where was coffee discovered according to legend?", "expected_path": "sample-coffee.txt"}
+{"question": "What stood on the site of the collapsed Pharos lighthouse?", "expected_path": "sample-essay.txt"}
+{"question": "Which insurance market grew out of London coffee houses?", "expected_path": "sample-coffee.txt"}

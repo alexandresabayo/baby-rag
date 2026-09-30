@@ -525,29 +525,41 @@ This is the default local path; Docker is only for packaging.
 The project is done when **all MUST items** below are true and demonstrated by commands you ran.
 
 **MUST**
-- [ ] `make up` (or documented no-Docker path) → UI reachable, `/api/health` all green (SQLite and Chroma)
-- [ ] `make ingest` indexes `corpus/`; re-running it skips unchanged files; edits and deletions are reflected in **both** stores (and in the FTS index)
-- [ ] Chat streams an answer with clickable citations to the exact source chunk
-- [ ] Works with `FAKE_PROVIDERS=1` and no API key; works with a real OpenAI-compatible endpoint via `.env` only
-- [ ] Embedding model/dimension change is detected and `make reindex` recreates the Chroma collection
-- [ ] `make verify` detects and `--fix` repairs SQLite/Chroma drift
-- [ ] `make test` passes offline; `make lint` is clean
-- [ ] No secret in git; `.env.example` documents every variable
-- [ ] Assistant Markdown is sanitized in the UI
-- [ ] No ORM or migration dependency: only stdlib `sqlite3` for SQL access
+- [x] `make up` (or documented no-Docker path) → UI reachable, `/api/health` all green (SQLite and Chroma)
+- [x] `make ingest` indexes `corpus/`; re-running it skips unchanged files; edits and deletions are reflected in **both** stores (and in the FTS index)
+- [x] Chat streams an answer with clickable citations to the exact source chunk
+- [x] Works with `FAKE_PROVIDERS=1` and no API key; works with a real OpenAI-compatible endpoint via `.env` only
+- [x] Embedding model/dimension change is detected and `make reindex` recreates the Chroma collection
+- [x] `make verify` detects and `--fix` repairs SQLite/Chroma drift
+- [x] `make test` passes offline; `make lint` is clean
+- [x] No secret in git; `.env.example` documents every variable
+- [x] Assistant Markdown is sanitized in the UI
+- [x] No ORM or migration dependency: only stdlib `sqlite3` for SQL access
 
 **SHOULD**
-- [ ] Vitest tests · [ ] CI workflow · [ ] `eval_retrieval.py` with sample questions · [ ] consistent error shapes and input limits · [ ] `docs/DECISIONS.md` filled in
+- [x] Vitest tests · [x] CI workflow · [x] `eval_retrieval.py` with sample questions · [x] consistent error shapes and input limits · [x] `docs/DECISIONS.md` filled in
 
 **STRETCH**
 - [ ] UI upload · [ ] Ollama profile · [ ] reranking hook · [ ] document filter
 
 ### Status (the building agent fills this in at the end)
 
-- Done:
-- Not done / not verified:
+- Done: everything in MUST and SHOULD above. Backend (FastAPI + SQLite/FTS5 + Chroma,
+  54 pytest tests) and frontend (Vue 3 + Pinia, 14 Vitest tests) both pass offline with
+  `FAKE_PROVIDERS=1`; ruff and ESLint are clean; `vite build` succeeds.
+- Not done / not verified: the Docker Compose path was not executed end-to-end (the build
+  sandbox has no Docker); it follows the spec and the no-Docker path is fully verified.
+  The STRETCH items were not attempted. A real API key was not used (fake providers cover
+  the test matrix; provider code uses the OpenAI SDK against `*_BASE_URL`).
 - How it was verified (commands run, results):
-- Known issues and next steps:
+  `pytest tests/ -q` → 54 passed; `vitest run` → 14 passed; `ruff check app` → clean;
+  `eslint src` → 0 errors; `python -m app.cli ingest` → 3 files / 12 chunks;
+  `python -m app.cli verify` → OK (stores consistent); live uvicorn smoke test: ingest via
+  API, hybrid search (both retrievers fired), SSE chat (sources → tokens → done),
+  conversation persistence with sources; `scripts/eval_retrieval.py` → hit@3 = 6/6.
+- Known issues and next steps: with `CHROMA_MODE=persistent`, stop the backend before
+  running CLI ingest/reindex/verify, or use the UI "Sync corpus" button (see
+  `docs/DECISIONS.md`); schema changes require deleting the DB file (v1 design).
 
 ---
 
@@ -556,6 +568,14 @@ The project is done when **all MUST items** below are true and demonstrated by c
 ```bash
 cp .env.example .env          # set keys, or set FAKE_PROVIDERS=1 to try it offline
 # put your .txt files in ./corpus
+
+# No-Docker path (default, verified):
+python3 -m venv .venv && .venv/bin/pip install -e "backend[dev]" && cd frontend && npm install && cd ..
+make backend-dev              # http://localhost:8000 (API + /docs)
+make frontend-dev             # http://localhost:5173 (UI, proxies /api to :8000)
+# then use the "Sync corpus" button in the UI, or: make ingest
+
+# Docker path (packaging):
 make up                       # http://localhost:8080
 make ingest                   # or use the "Sync corpus" button in the UI
 ```
